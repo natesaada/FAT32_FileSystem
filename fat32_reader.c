@@ -1,5 +1,4 @@
 /***********************************************************
- * TODO: Fill in this area and delete this line
  * Name of program:
  * Authors:
  * Description:
@@ -20,7 +19,6 @@
 /* Put any symbolic constants (defines) here */
 #define True 1  /* C has no booleans! */
 #define False 0
-
 #define MAX_CMD 80
 
 uint16_t BPB_BytesPerSec=0;
@@ -28,8 +26,12 @@ uint8_t BPB_SecPerClus=0;
 uint16_t BPB_RsvdsSecCnt=0;
 uint8_t BPB_NumFATs=0;
 uint32_t BPB_FATSz32=0;
+
 uint16_t BytesPerSec(int fd);
 uint8_t SecPerClus(int fd);
+uint16_t RsvdsSecCnt(int fd);
+uint8_t NumFATs (int fd);
+uint32_t FATSz32(int fd);
 
 
 
@@ -63,6 +65,11 @@ int main(int argc, char *argv[])
 	}
 	
   	BPB_BytesPerSec = BytesPerSec(fd);	
+  	BPB_SecPerClus = SecPerClus(fd);
+  	BPB_RsvdsSecCnt = RsvdsSecCnt(fd);
+  	BPB_NumFATs = NumFATs(fd);
+  	BPB_FATSz32= FATSz32(fd);
+  	
 	
 	/* Parse boot sector and get information */
 
@@ -82,6 +89,10 @@ int main(int argc, char *argv[])
 		if(strncmp(cmd_line,"info",4)==0) {
 			printf("Going to display info.\n");
 			printf("BPB_BytesPerSec is 0x%x, decimal: %i\n", BPB_BytesPerSec, BPB_BytesPerSec);
+			printf("BPB_SecPerClus is 0x%x, decimal: %i\n", BPB_SecPerClus, BPB_SecPerClus);
+			printf("BPB_RsvdsSecCnt is 0x%x, decimal: %i\n", BPB_RsvdsSecCnt, BPB_RsvdsSecCnt);
+			printf("BPB_NumFATs is 0x%x, decimal: %i\n", BPB_NumFATs, BPB_NumFATs);
+			printf("BPB_FATSz32 is 0x%x, decimal: %i\n", BPB_FATSz32, BPB_FATSz32);
 			
 
 		}
@@ -113,7 +124,6 @@ int main(int argc, char *argv[])
 		else if(strncmp(cmd_line,"quit",4)==0) {
 			printf("Quitting.\n");
 			
-//     		exit();
 			break;
 		}
 		else
@@ -155,6 +165,97 @@ uint16_t BytesPerSec(int fd){
 
 uint8_t SecPerClus(int fd){
 
-	return 0;
+	uint8_t read_num;
+	int result;
+	result = lseek(fd, 13, 0);
+	if(result == -1){
+    	perror("lseek");
+    	close(fd);
+    	return -1;
+  	}
+  	
+  	result = read(fd,&read_num,(sizeof(read_num)));
+	if(result== -1) {
+    	perror("read");
+    	close(fd);
+    	return -1;
+  	}
+	return read_num;
 
 }
+
+uint16_t RsvdsSecCnt(int fd){
+
+	uint16_t read_num;
+	int result;
+	result = lseek(fd, 14, 0);
+	if(result == -1){
+    	perror("lseek");
+    	close(fd);
+    	return -1;
+  	}
+  	
+  	result = read(fd,&read_num,(sizeof(read_num)));
+  	
+  	if(result== -1) {
+    	perror("read");
+    	close(fd);
+    	return -1;
+  	}
+  	
+  	 // if(little_endian == 0){
+//   		convert = (read_num>>8) | (read_num<<8);
+// 		BPB_BytesPerSec = convert;
+//   	}
+  	
+  	return read_num;
+}
+
+uint8_t NumFATs(int fd){
+
+	uint8_t read_num;
+	int result;
+	result = lseek(fd, 16, 0);
+	if(result == -1){
+    	perror("lseek");
+    	close(fd);
+    	return -1;
+  	}
+  	
+  	result = read(fd,&read_num,(sizeof(read_num)));
+	if(result== -1) {
+    	perror("read");
+    	close(fd);
+    	return -1;
+  	}
+	return read_num;
+}
+
+uint32_t FATSz32( int fd){
+	uint32_t read_num;
+	int result;
+	result = lseek(fd, 36, 0);
+	if(result == -1){
+    	perror("lseek");
+    	close(fd);
+    	return -1;
+  	}
+  	
+  	result = read(fd,&read_num,(sizeof(read_num)));
+  	
+  	if(result== -1) {
+    	perror("read");
+    	close(fd);
+    	return -1;
+  	}
+  	
+  	 // if(little_endian == 0){
+//   		convert = (read_num>>8) | (read_num<<8);
+// 		BPB_BytesPerSec = convert;
+//   	}
+  	
+  	return read_num;
+	
+
+}
+
