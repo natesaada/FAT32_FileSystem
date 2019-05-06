@@ -21,6 +21,7 @@
 #define False 0
 #define MAX_CMD 80
 
+
 uint16_t BPB_BytesPerSec=0;
 uint8_t BPB_SecPerClus=0;
 uint16_t BPB_RsvdsSecCnt=0;
@@ -33,8 +34,8 @@ uint16_t RsvdsSecCnt(int fd);
 uint8_t NumFATs (int fd);
 uint32_t FATSz32(int fd);
 
-
-
+uint32_t  swapEndian32(uint32_t num);
+uint16_t  swapEndian16(uint16_t num);
 
 /* This is the main function of your project, and it will be run
  * first before all other functions.
@@ -70,6 +71,12 @@ int main(int argc, char *argv[])
   	BPB_NumFATs = NumFATs(fd);
   	BPB_FATSz32= FATSz32(fd);
   	
+    if(little_endian==0){
+        //flip endianness
+        BPB_BytesPerSec = swapEndian16(BPB_BytesPerSec);
+        BPB_RsvdsSecCnt = swapEndian16(BPB_RsvdsSecCnt);
+        BPB_FATSz32 = swapEndian32(BPB_FATSz32);
+    }
 	
 	/* Parse boot sector and get information */
 
@@ -257,5 +264,59 @@ uint32_t FATSz32( int fd){
   	return read_num;
 	
 
+}
+
+uint16_t  swapEndian16(uint16_t num){
+    uint16_t b0,b1;
+    uint16_t res;
+
+    b0 = (num & 0x00ff) << 8u;
+    b1 = (num & 0xff00) >> 8u;
+
+
+    res = b0 | b1;
+    return res;
+}
+
+uint32_t  swapEndian32(uint32_t num){
+    uint32_t b0,b1,b2,b3;
+    uint32_t res;
+
+    b0 = (num & 0x000000ff) << 24u;
+    b1 = (num & 0x0000ff00) << 8u;
+    b2 = (num & 0x00ff0000) >> 8u;
+    b3 = (num & 0xff000000) >> 24u;
+
+    res = b0 | b1 | b2 | b3;
+    return res;
+}
+
+
+//returns an array of strings, including . and ..
+char** getls(char* dirName){
+    // @TODO add . and ..
+    //   also use malloc and realloc for resizable arrays
+}
+
+//print out ls
+void printLs(char* dirName){
+    char** list = getls(dirName);
+    int i = 0;
+    while(list[i]!=NULL){
+        printf("%s\n",list[i]);
+        i++;
+    }
+}
+
+void printStat(char* fileName){
+    //get the info
+    int size, clusterNum;
+    char* attributes;
+    //size
+    printf("%d",size);
+    //attributes
+    printf("%s",attributes);
+    //first cluster number
+    printf("%d",clusterNum);
 }
 
