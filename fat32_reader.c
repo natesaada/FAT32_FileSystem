@@ -1,6 +1,6 @@
 /***********************************************************
- * Name of program: Natanel Saada and Yehuda Goldfeder
- * Authors:
+ * Name of program: fat32_reader
+ * Authors: Natanel Saada and Yehuda Goldfeder
  * Description:
  **********************************************************/
 
