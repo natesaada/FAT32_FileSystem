@@ -1,5 +1,5 @@
 /***********************************************************
- * Name of program:
+ * Name of program: Natanel Saada and Yehuda Goldfeder
  * Authors:
  * Description:
  **********************************************************/
@@ -77,15 +77,7 @@ int main(int argc, char *argv[])
         BPB_RsvdsSecCnt = swapEndian16(BPB_RsvdsSecCnt);
         BPB_FATSz32 = swapEndian32(BPB_FATSz32);
     }
-	
-	/* Parse boot sector and get information */
 
-	/* Get root directory address */
-	//printf("Root addr is 0x%x\n", root_addr);
-
-
-	/* Main loop.  You probably want to create a helper function
-       for each command besides quit. */
 
 	while(True) {
 		bzero(cmd_line, MAX_CMD);
@@ -100,8 +92,6 @@ int main(int argc, char *argv[])
 			printf("BPB_RsvdsSecCnt is 0x%x, decimal: %i\n", BPB_RsvdsSecCnt, BPB_RsvdsSecCnt);
 			printf("BPB_NumFATs is 0x%x, decimal: %i\n", BPB_NumFATs, BPB_NumFATs);
 			printf("BPB_FATSz32 is 0x%x, decimal: %i\n", BPB_FATSz32, BPB_FATSz32);
-			
-
 		}
 
 		else if(strncmp(cmd_line,"open",4)==0) {
@@ -161,12 +151,6 @@ uint16_t BytesPerSec(int fd){
     	close(fd);
     	return -1;
   	}
-  	
-  	 // if(little_endian == 0){
-//   		convert = (read_num>>8) | (read_num<<8);
-// 		BPB_BytesPerSec = convert;
-//   	}
-  	
   	return read_num;
 }
 
@@ -209,12 +193,6 @@ uint16_t RsvdsSecCnt(int fd){
     	close(fd);
     	return -1;
   	}
-  	
-  	 // if(little_endian == 0){
-//   		convert = (read_num>>8) | (read_num<<8);
-// 		BPB_BytesPerSec = convert;
-//   	}
-  	
   	return read_num;
 }
 
@@ -255,15 +233,8 @@ uint32_t FATSz32( int fd){
     	close(fd);
     	return -1;
   	}
-  	
-  	 // if(little_endian == 0){
-//   		convert = (read_num>>8) | (read_num<<8);
-// 		BPB_BytesPerSec = convert;
-//   	}
-  	
-  	return read_num;
-	
 
+  	return read_num;
 }
 
 uint16_t  swapEndian16(uint16_t num){
