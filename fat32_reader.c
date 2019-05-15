@@ -21,7 +21,7 @@
 #define False 0
 #define MAX_CMD 80
 
-//stats for info
+//stats for info and root
 uint16_t BPB_BytesPerSec=0;
 uint8_t BPB_SecPerClus=0;
 uint16_t BPB_RsvdsSecCnt=0;
@@ -30,7 +30,7 @@ uint32_t BPB_FATSz32=0;
 uint16_t BPB_RootEntCnt=0;
 uint32_t root_directory = 0;
 
-
+//declaring info functions here
 uint16_t BytesPerSec(int fd);
 uint8_t SecPerClus(int fd);
 uint16_t RsvdsSecCnt(int fd);
@@ -38,21 +38,15 @@ uint8_t NumFATs (int fd);
 uint32_t FATSz32(int fd);
 uint16_t RootEntCnt(int fd);
 
+//declaring root info functions here
 uint32_t RootDirSectors();
 uint32_t FirstDataSector();
 uint32_t FirstSectorofCluster(uint32_t n);
 uint32_t RootDir();
 
-//helper functions... taken from Microsoft Specs
-
+//swap endian functions
 uint32_t  swapEndian32(uint32_t num);
 uint16_t  swapEndian16(uint16_t num);
-
-
-
-/* Want to calculate the root directory in order to get the volume name */
-
-
 
 
 /* This is the main function of your project, and it will be run
@@ -99,6 +93,7 @@ int main(int argc, char *argv[])
         BPB_BytesPerSec = swapEndian16(BPB_BytesPerSec);
         BPB_RsvdsSecCnt = swapEndian16(BPB_RsvdsSecCnt);
         BPB_FATSz32 = swapEndian32(BPB_FATSz32);
+        BPB_RootEntCnt = swapEndian16(BPB_RootEntCnt);
     }
     
 
@@ -132,6 +127,9 @@ int main(int argc, char *argv[])
 			printf("%s\n",volumeID);
 			
 		}
+		else if (strncmp(cmd_line,"stat",4)==0){
+			printf("Going to stat!\n");
+		}
 		
 		else if(strncmp(cmd_line,"size",4)==0) {
 			printf("Going to size!\n");
@@ -162,11 +160,6 @@ int main(int argc, char *argv[])
 
 	return 0; /* Success */
 }
-
-
-
-
-
 
 
 /* get the amount of bytes per sector */
@@ -278,6 +271,8 @@ uint32_t FATSz32( int fd){
   	return value;
 }
 
+// this field contains the count of 32 byte directory entries in the root directory. 
+// For FAT32 volumes, this field must be set to 0. 
 uint16_t RootEntCnt(int fd){
 
 	uint16_t value;
@@ -388,6 +383,8 @@ uint32_t FirstDataSector(){
 	uint32_t first_data_sector;
 	first_data_sector = BPB_RsvdsSecCnt + (BPB_NumFATs * BPB_FATSz32) + RootDirSectors();
 	return first_data_sector;
+	
+	/* convert endian-ness */
 }
 
 
@@ -396,6 +393,8 @@ uint32_t FirstSectorofCluster(uint32_t n){
 	uint32_t first_sector_of_cluster;
  	first_sector_of_cluster = ((n - 2) * BPB_SecPerClus) + FirstDataSector();
  	return first_sector_of_cluster;
+ 	
+ 	/* convert endian-ness */
 }
 
 
@@ -403,6 +402,8 @@ uint32_t FirstSectorofCluster(uint32_t n){
 uint32_t RootDir(){
 	uint32_t root_Address = (FirstDataSector() * BPB_BytesPerSec);
 	return root_Address;
+	
+	/* convert endian-ness */
 }
 
 
