@@ -48,6 +48,15 @@ uint32_t RootDir();
 uint32_t  swapEndian32(uint32_t num);
 uint16_t  swapEndian16(uint16_t num);
 
+//read helper functions
+uint16_t readFromDisk16(int offset);
+uint32_t readFromDisk32(int offset);
+uint32_t getFatEntry(int n);
+
+//other functions
+ls(char* dirName);
+
+
 
 /* This is the main function of your project, and it will be run
  * first before all other functions.
@@ -140,7 +149,7 @@ int main(int argc, char *argv[])
 		}
 
 		else if(strncmp(cmd_line,"ls",2)==0) {
-			printf("Going to ls.\n");
+			ls(NULL);
 		}
 
 		else if(strncmp(cmd_line,"read",4)==0) {
@@ -327,20 +336,17 @@ uint32_t  swapEndian32(uint32_t num){
 
 
 //returns an array of strings, including . and ..
-char** getls(char* dirName){
-    // @TODO add . and ..
-    //   also use malloc and realloc for resizable arrays
+ls(char* dirName){
+    //for now assume root DIR
+    
+    for(int i = 0;i<2;i++){
+        int x = readFromDisk32(root_directory*BPB_BytesPerSec+(i*4));
+        printf("%i\n",x);
+    }
+    
 }
 
-//print out ls
-void printLs(char* dirName){
-    char** list = getls(dirName);
-    int i = 0;
-    while(list[i]!=NULL){
-        printf("%s\n",list[i]);
-        i++;
-    }
-}
+
 
 void printStat(char* fileName){
     //get the info
@@ -408,6 +414,64 @@ uint32_t RootDir(){
 
 
 
+
+
+
+uint32_t getFatEntry(int n){
+    //assume for now this is FAT32
+    int offset = n*4;
+    int secNum = BPB_RsvdsSecCnt + (offset/BPB_BytesPerSec);
+    offset = offset % BPB_BytesPerSec;
+    
+    //read from disk
+    //we didnt really need sector computatoin above since this isnt really a disk, but it just felt right in the spirit of the project
+    return readFromDisk32(secNum*BPB_BytesPerSec+offset)& 0x0FFFFFFF;
+    
+
+    
+}
+
+uint32_t readFromDisk32(int offset){
+    uint32_t value;
+	int result;
+	result = lseek(fd, offset, SEEK_SET);
+	if(result == -1){
+    	perror("lseek");
+    	close(fd);
+    	return -1;
+  	}
+  	
+  	result = read(fd,&value,(sizeof(value)));
+  	
+  	if(result== -1) {
+    	perror("read");
+    	close(fd);
+    	return -1;
+  	}
+    
+  	return value;   
+}
+
+uint16_t readFromDisk16(int offset){
+    uint16_t value;
+	int result;
+	result = lseek(fd, offset, SEEK_SET);
+	if(result == -1){
+    	perror("lseek");
+    	close(fd);
+    	return -1;
+  	}
+  	
+  	result = read(fd,&value,(sizeof(value)));
+  	
+  	if(result== -1) {
+    	perror("read");
+    	close(fd);
+    	return -1;
+  	}
+    
+  	return value;   
+}
 
 
 
