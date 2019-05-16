@@ -52,8 +52,8 @@ int strcmp_ign_ws(const char *s1, const char *s2) {
   const char *p1 = s1, *p2 = s2;
 
   while (1) {
-    while (*p1 != '\0' && (isspace((unsigned char)*p1))||(*p1)=='$') p1++;
-    while (*p2 != '\0' && (isspace((unsigned char)*p2))||(*p2)=='$') p2++;
+    while (*p1 != '\0' && (isspace((unsigned char)*p1)||(*p1)=='$')) p1++;
+    while (*p2 != '\0' && (isspace((unsigned char)*p2)||(*p2)=='$')) p2++;
     if (*p1 == '\0' || *p2 == '\0') {
       return (*p2 == '\0') - (*p1 == '\0');
     }
@@ -281,9 +281,11 @@ int main(int argc, char *argv[])
 		else if(strncmp(cmd_line,"read",4)==0) {
 
 			     struct list* l = split(cmd_line," ");
-           if(l->size ==4)
+           if(l->size ==4){
+           
+            if(l->array[1][strlen(l->array[1])-4]=='.') l->array[1][strlen(l->array[1])-4]='$';
             readFile(l->array[1],atoi(l->array[2]),atoi(l->array[3]));
-           else
+           }else
             printf("wrong args\n");
 		}
 
@@ -623,7 +625,6 @@ void readFile(char* FILE_NAME, int POSITION, int NUM_BYTES){
             if( entry[0] == 0xE5) continue;
             if( entry[0] == 0x00) {break;}
             memcpy(name,entry,11);
-
             if(strcmp_ign_ws(FILE_NAME,name)==0){
                 //read attribute
                 if(att==0x10){
@@ -654,9 +655,9 @@ void readFile(char* FILE_NAME, int POSITION, int NUM_BYTES){
 
 void printEntry(uint8_t* entry){
 //size
-printf("size:%i\n",*(int*)(entry+28));
-printf("attr:%x\n",entry[11]);
-printf("clust:%x\n",entry[26]| (entry[20]<<16));
+printf("size: %i\n",*(int*)(entry+28));
+printf("attr: 0x%x\n",entry[11]);
+printf("clust: 0x%x\n",entry[26]| (entry[20]<<16));
 }
 
 void statf(char* fileName){
