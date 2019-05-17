@@ -105,18 +105,20 @@ int main(int argc, char *argv[])
 
     while(True) {
         bzero(cmd_line, MAX_CMD);
-        
+
         //print out path and update path info
         if(pathNum>0){
-            {if(!strcmp_ign_ws(path[pathNum-1],".."))pathNum-=2;}
-            {if(!strcmp_ign_ws(path[pathNum-1],"."))pathNum-=1;}            
+            if(!strcmp_ign_ws(path[pathNum-1],".."))pathNum-=2;
+            else if(!strcmp_ign_ws(path[pathNum-1],"."))pathNum-=1;            
         }
+
         if(pathNum<0)pathNum=0;
+        
+
         printf("/");
         for(int i =0;i<pathNum;i++)printf("%s/",trimwhitespace(path[i]));
         printf("]");
         if(pathNum<0)pathNum=0;
-
         //read in prompt
         fgets(cmd_line,MAX_CMD,stdin);
      
