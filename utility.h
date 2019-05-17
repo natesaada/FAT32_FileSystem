@@ -1,6 +1,7 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+ 
 //Utility method I wrote for neatly splitting strings, and using array doubling for efficiency 
 //via a list struct
 struct list{
@@ -308,7 +309,13 @@ char *trimwhitespace(char *str)
 }
 
 //taken from stack overflow https://stackoverflow.com/questions/20016953/c-how-to-compare-strings-with-pointers-ignoring-whitespaces
-int strcmp_ign_ws(const char *s1, const char *s2) {
+int strcmp_ign_ws(char *s1, char *s2) {
+  char* p = s1;  
+  for ( ; *p; ++p) *p = tolower(*p);
+  p = s2;  
+  for ( ; *p; ++p) *p = tolower(*p);
+    
+    
   const char *p1 = s1, *p2 = s2;
 
   while (1) {
