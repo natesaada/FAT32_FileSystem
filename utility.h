@@ -312,8 +312,8 @@ int strcmp_ign_ws(const char *s1, const char *s2) {
   const char *p1 = s1, *p2 = s2;
 
   while (1) {
-    while (*p1 != '\0' && (isspace((unsigned char)*p1)||(*p1)=='$')) p1++;
-    while (*p2 != '\0' && (isspace((unsigned char)*p2)||(*p2)=='$')) p2++;
+    while (*p1 != '\0' && (isspace((unsigned char)*p1)))p1++;
+    while (*p2 != '\0' && (isspace((unsigned char)*p2))) p2++;
     if (*p1 == '\0' || *p2 == '\0') {
       return (*p2 == '\0') - (*p1 == '\0');
     }

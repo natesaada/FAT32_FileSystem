@@ -32,7 +32,7 @@ int pathNum= 0;
 int fd=0;
 //pwd cluster and location
 uint32_t pwd = 0;
-int  pwdClustNum = 2;
+uint32_t  pwdClustNum = 2;
 
 //read helper functions
 uint16_t readFromDisk16(int offset);
@@ -117,9 +117,7 @@ int main(int argc, char *argv[])
 
         //read in prompt
         fgets(cmd_line,MAX_CMD,stdin);
-        //replace . if not beginning
-        if(cmd_line[strlen(cmd_line)-5]=='.') cmd_line[strlen(cmd_line)-5]='$';
-		
+     
         
         /* Start comparing input */
 		/* info prints out the information about BPB retrieved above */
@@ -210,147 +208,158 @@ int main(int argc, char *argv[])
 }
 
 
-void size(char* file){
-  //find file
-  char* name = malloc(sizeof(char)*12);
-  name[11] = 0;
-
-      uint8_t* entry;
-      for(int i = 0;i<BPB_BytesPerSec/32 ;i++){
-          entry = readFromDisk(pwd+(i*32),32);
-          char att = entry[11]&63;
-          if((att!=0x10)&&
-              (att!=0x20)&&
-              (att!=0x20)&&
-              (att!=0x20))continue;
-          if( entry[0] == 0xE5) continue;
-          if( entry[0] == 0x00) {break;}
-          memcpy(name,entry,11);
-          if(strcmp_ign_ws(file,name)==0){
-              //read attribute
-              if(att==0x10){
-                  printf("Error: not a file\n");return;
-              }
-              printf("%i\n",*(int*)(entry+28));
-              return;
-          }
-      }
-
-}
-
-//returns an array of strings, including . and ..
+//list files in dir
 void ls(int dir){
-    char* name = malloc(sizeof(char)*9);
-    char* ext = malloc(sizeof(char)*5);
-    ext[0]= '.';
-    ext+=1;
+    char name[9];
+    char ext[4]; 
     name[8] = '\0';
     ext[3]= '\0';
-        uint8_t* entry;
+    uint8_t* entry;
+    //search the cluster
+    
+    uint32_t cluster = pwdClustNum;
+    
+    while(1){
+        int location = root_directory+ (cluster-2)*BPB_BytesPerSec*BPB_SecPerClus;
         for(int i = 0;i<BPB_BytesPerSec*BPB_SecPerClus/32 ;i++){
-            entry = readFromDisk(pwd+(i*32),32);
-	    char att = entry[11]&63;
-	    if((att!=0x10)&&
-	    (att!=0x20)&&
-	    (att!=0x20)&&
-	    (att!=0x20))continue;
-	    if( entry[0] == 0xE5) continue;
+            //compute the location in bytes based on the cluster 
+
+            entry = readFromDisk(location+(i*32),32);
+            char att = entry[11]&63;
+            
+            //if it is a file to ignore, ignore it
+            if((att!=0x10)&&(att!=0x20))continue;
+            if( entry[0] == 0xE5) continue;
+            //if it is the last file, stop
             if( entry[0] == 0x00) {break;}
+            
+            //copy name and extension
             memcpy(name,entry,8);
             memcpy(ext,entry+8,3);
-            if(ext[0]==' ')ext++;
-	    printf("%s%s\n",trimwhitespace(name),ext-1);
-	}
-  int clustNum = pwdClustNum;
-  while(getFatEntry(clustNum)!=0){
-      clustNum = getFatEntry(clustNum);
-      int loc = root_directory+ (clustNum-2)*BPB_BytesPerSec*BPB_SecPerClus;
-      uint8_t* file = readFromDisk(loc,BPB_BytesPerSec*BPB_SecPerClus);
-      for(int i = 0;i<BPB_BytesPerSec*BPB_SecPerClus/32 ;i++){
-          entry = file+(i*32);
-    char att = entry[11]&63;
-    if((att!=0x10)&&
-    (att!=0x20)&&
-    (att!=0x20)&&
-    (att!=0x20))continue;
-    if( entry[0] == 0xE5) continue;
-          if( entry[0] == 0x00) {break;}
-          memcpy(name,entry,8);
-          memcpy(ext,entry+8,3);
-            if(ext[0]==' ')ext++;
-          printf("%s%s\n",trimwhitespace(name),ext-1);
-}
-
-  }
+            
+            //print it out, treating directory and file differently
+            if(att==0x20)
+                printf("%s.%s\n",trimwhitespace(name),ext);
+            else
+                printf("%s\n",trimwhitespace(name));  
+        }
+        
+        //get next cluster from FAT
+        cluster = getFatEntry(cluster);
+        //if at EOF, break
+        if(cluster>=0xFFFFFF8) break;        
+    }
 
 }
 
+//get size of a file
+void size(char* file){
+    //find file
+    char name[13];
+    char* ext = name+9;
+    name[8] = '.';
+    name[12]= '\0';
+    uint8_t* entry;
+    //search the cluster
+    
+    uint32_t cluster = pwdClustNum;
+    
+    while(1){
+        int location = root_directory+ (cluster-2)*BPB_BytesPerSec*BPB_SecPerClus;
+        for(int i = 0;i<BPB_BytesPerSec*BPB_SecPerClus/32 ;i++){
+            //compute the location in bytes based on the cluster 
+
+            entry = readFromDisk(location+(i*32),32);
+            char att = entry[11]&63;
+            
+            //if it is a file to ignore, ignore it
+            if((att!=0x10)&&(att!=0x20))continue;
+            if( entry[0] == 0xE5) continue;
+            //if it is the last file, stop
+            if( entry[0] == 0x00) {break;}
+            
+            //copy name and extension
+            memcpy(name,entry,8);
+            memcpy(ext,entry+8,3);
+            //see if there is a match to file
+            if(strcmp_ign_ws(file,name)==0){
+                //read attribute
+                if(att==0x10){
+                    printf("Error: not a file\n");return;
+                }
+                printf("%i\n",*(int*)(entry+28));
+                return;
+            }      
+
+        }
+        
+        //get next cluster from FAT
+        cluster = getFatEntry(cluster);
+        //if at EOF, break
+        if(cluster>=0xFFFFFF8) break;        
+    }
+
+    printf("ERROR:Not a file\n");
+
+  
+}
+
+//change directory
 void cd(char* dir){
     //search pwd
-    char* name = malloc(sizeof(char)*12);
-    name[11] = 0;
+   //find file
+    char* name = malloc(8*sizeof(char));
+    name[7]= '\0';
+    uint8_t* entry;
+    //search the cluster
+    
+    uint32_t cluster = pwdClustNum;
+    
+    while(1){
+        int location = root_directory+ (cluster-2)*BPB_BytesPerSec*BPB_SecPerClus;
+        for(int i = 0;i<BPB_BytesPerSec*BPB_SecPerClus/32 ;i++){
+            //compute the location in bytes based on the cluster 
 
-        uint8_t* entry;
-        for(int i = 0;i<BPB_BytesPerSec/32 ;i++){
-            entry = readFromDisk(pwd+(i*32),32);
-	    char att = entry[11]&63;
-	    if((att!=0x10)&&
-	    (att!=0x20)&&
-	    (att!=0x20)&&
-	    (att!=0x20))continue;
-	    if( entry[0] == 0xE5) continue;
+            entry = readFromDisk(location+(i*32),32);
+            char att = entry[11]&63;
+            
+            //if it is a file to ignore, ignore it
+            if((att!=0x10)&&(att!=0x20))continue;
+            if( entry[0] == 0xE5) continue;
+            //if it is the last file, stop
             if( entry[0] == 0x00) {break;}
-            memcpy(name,entry,11);
-
+            
+            //copy name and extension
+            memcpy(name,entry,8);
+            //see if there is a match to file
             if(strcmp_ign_ws(dir,name)==0){
-                 //read attribute
-            if(att!=0x10){
-                printf("Error: not a directory\n");return;
-            }
-		int clustNum = entry[26]| (entry[20]<<16);
-        pwd = root_directory+ (clustNum-2)*BPB_BytesPerSec*BPB_SecPerClus;
-        pwdClustNum=clustNum;
-        path[pathNum++] = name;
-        return;
+                if(att!=0x10){
+                    printf("Error: not a directory\n");
+                    return;
+                }
+                uint32_t clustNum = (*(int*)(entry+26))| ((*(int*)(entry+20))<<16);
+                pwd = root_directory+ (clustNum-2)*BPB_BytesPerSec*BPB_SecPerClus;
+                pwdClustNum=clustNum;
+                path[pathNum++] = name;
+                return;    
+            }      
+
         }
-	}
+        
+        //get next cluster from FAT
+        cluster = getFatEntry(cluster);
+        //if at EOF, break
+        if(cluster>=0xFFFFFF8) break;        
+    }
 
-  int clustNum = pwdClustNum;
-  while(getFatEntry(clustNum)!=0){
-      clustNum = getFatEntry(clustNum);
-      int loc = root_directory+ (clustNum-2)*BPB_BytesPerSec*BPB_SecPerClus;
-      uint8_t* file = readFromDisk(loc,BPB_BytesPerSec*BPB_SecPerClus);
-      for(int i = 0;i<BPB_BytesPerSec*BPB_SecPerClus/32 ;i++){
-          entry = file+(i*32);
-    char att = entry[11]&63;
-    if((att!=0x10)&&
-    (att!=0x20)&&
-    (att!=0x20)&&
-    (att!=0x20))continue;
-    if( entry[0] == 0xE5) continue;
-          if( entry[0] == 0x00) {break;}
-          memcpy(name,entry,11);
+    printf("ERROR:Not a file\n");
 
-
-          if(strcmp_ign_ws(dir,name)==0){
-               //read attribute
-          if(att!=0x10){
-              printf("Error: not a directory\n");return;
-          }
-      int clustNum = entry[26]| (entry[20]<<16);
-      path[pathNum++] = name;
-      pwd = root_directory+ (clustNum-2)*BPB_BytesPerSec*BPB_SecPerClus;
-      pwdClustNum=clustNum;
-      return;
-      }
-
+    
+    
+    
 }
 
-  }
 
-
-	printf("Error: does not exist\n");
-}
 
 void readFile(char* FILE_NAME, int POSITION, int NUM_BYTES){
     //find file
@@ -522,7 +531,7 @@ uint16_t readFromDisk16(int offset){
 
 //read specified amount from disk, with error checking
 uint8_t* readFromDisk(int offset,int byteNum){
-  uint8_t* value= calloc(byteNum+1,1);
+  uint8_t* value= calloc(byteNum,1);
 	int result;
 	result = lseek(fd, offset, SEEK_SET);
 	if(result == -1){
@@ -538,6 +547,5 @@ uint8_t* readFromDisk(int offset,int byteNum){
     	close(fd);
     	return NULL;
   	}
-    value[byteNum]='\0';
   	return value;
 }
