@@ -59,7 +59,6 @@ int main(int argc, char *argv[])
     
     char cmd_line[MAX_CMD];
     int little_endian = 5;
-    uint16_t convert = 0;
 
     //testing to see what machine architecture we have.
     if (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__){

@@ -20,6 +20,9 @@ Within the main function, before entering the while loop, we convert the bytes t
 Ls Command:
 this function displays the files that are in the specified directory.
 
+Cd command:
+Changes the present working directory to the specified directory 
+
 Stat command:
 This function returns the sizeof the fileor directory name, the attributes of the file or directory name, and the first cluster number of the file or directory name if it is in the present working directory.
 
@@ -36,4 +39,4 @@ Quit command:
 Quits the utility.   
 
 Challenges faced:
-The only challenge we faced so far was being on top of our game with endian conversion. But once we got that down things were looking good for us.
+Some of the challenges we faced so far was being on top of our game with endian conversion. But once we got that down things were looking good for us. It was also a bit frustrating testing in a VM but we'll make do :)
